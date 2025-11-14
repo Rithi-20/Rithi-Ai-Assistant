@@ -189,8 +189,7 @@ export const knowledgeBase = pgTable(
   {
     id: uuid("id").primaryKey().notNull().defaultRandom(),
     userId: uuid("user_id")
-      .notNull()
-      .references(() => UserTable.id, { onDelete: "cascade" }),
+      .notNull(),
     name: text("name").notNull(),
     description: text("description"),
 

@@ -1,7 +1,7 @@
 import { google } from "@ai-sdk/google";
 import { convertToModelMessages, stepCountIs, streamText, tool } from "ai";
 import { z } from "zod";
-import { getSession } from "auth/server";
+
 import { pgDb } from "lib/db/pg/db.pg";
 import { knowledgeBase } from "lib/db/pg/schema.pg";
 import { eq, and } from "drizzle-orm";
@@ -10,10 +10,7 @@ import { searchKnowledge } from "lib/knowledge/search-service";
 export async function POST(req: Request) {
   try {
     // Check authentication
-    const session = await getSession();
-    if (!session?.user) {
-      return new Response("Unauthorized", { status: 401 });
-    }
+   
 
     const { messages, knowledgeBaseId } = await req.json();
 
@@ -24,7 +21,6 @@ export async function POST(req: Request) {
       .where(
         and(
           eq(knowledgeBase.id, knowledgeBaseId),
-          eq(knowledgeBase.userId, session.user.id)
         )
       );
 

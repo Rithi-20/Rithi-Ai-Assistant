@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getSessionCookie } from "better-auth/cookies";
+
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -12,12 +12,12 @@ export async function middleware(request: NextRequest) {
     return new Response("pong", { status: 200 });
   }
 
-  const sessionCookie = getSessionCookie(request);
+  //const sessionCookie = getSessionCookie(request);
 
   // Check if user is authenticated
-  if (!sessionCookie) {
-    return NextResponse.redirect(new URL("/sign-in", request.url));
-  }
+  // if (!sessionCookie) {
+  //   return NextResponse.redirect(new URL("/sign-in", request.url));
+  // }
 
   // Redirect /admin to /admin/page (if you want a default)
   if (pathname === "/admin") {

@@ -2,8 +2,7 @@
 
 import { pgDb } from "lib/db/pg/db.pg";
 import { knowledgeBase, document, embedding } from "lib/db/pg/schema.pg";
-import { getSession } from "auth/server";
-import { eq, and, sum } from "drizzle-orm";
+import { eq, sum } from "drizzle-orm";
 import { generateUUID } from "lib/utils";
 import { searchKnowledge as searchKnowledgeService } from "lib/knowledge/search-service";
 
@@ -13,27 +12,18 @@ import { searchKnowledge as searchKnowledgeService } from "lib/knowledge/search-
 export async function createKnowledgeBase(data: {
   name: string;
   description?: string;
-  chunkingConfig: {
-    minSize: number;
-    maxSize: number;
-    overlap: number;
-  };
+  chunkingConfig: { minSize: number; maxSize: number; overlap: number };
 }) {
-  const session = await getSession();
-  if (!session?.user) throw new Error("Unauthorized");
-
   const id = generateUUID();
 
   const [newKB] = await pgDb
     .insert(knowledgeBase)
     .values({
       id,
-      userId: session.user.id,
+      userId: "04b9e7e2-9513-4a7d-8f71-4ec73a0d7d5f",
       name: data.name,
       description: data.description || null,
       chunkingConfig: data.chunkingConfig,
-
-      // 🔥 Always use local embeddings
       embeddingModel: "local-hash-embedding",
       embeddingDimension: 256,
       tokenCount: 0,
@@ -47,25 +37,8 @@ export async function createKnowledgeBase(data: {
  * GET KNOWLEDGE BASES
  * ------------------------------------------------------------ */
 export async function getKnowledgeBases() {
-  const session = await getSession();
-  if (!session?.user) throw new Error("Unauthorized");
+  const knowledgeBases = await pgDb.select().from(knowledgeBase);
 
-  const knowledgeBases = await pgDb
-    .select({
-      id: knowledgeBase.id,
-      name: knowledgeBase.name,
-      description: knowledgeBase.description,
-      chunkingConfig: knowledgeBase.chunkingConfig,
-      embeddingModel: knowledgeBase.embeddingModel,
-      embeddingDimension: knowledgeBase.embeddingDimension,
-      tokenCount: knowledgeBase.tokenCount,
-      createdAt: knowledgeBase.createdAt,
-      updatedAt: knowledgeBase.updatedAt,
-    })
-    .from(knowledgeBase)
-    .where(eq(knowledgeBase.userId, session.user.id));
-
-  // Attach document + chunk metadata
   const kbWithCounts = await Promise.all(
     knowledgeBases.map(async (kb) => {
       const docs = await pgDb
@@ -99,15 +72,10 @@ export async function getKnowledgeBases() {
  * GET SINGLE KB
  * ------------------------------------------------------------ */
 export async function getKnowledgeBase(id: string) {
-  const session = await getSession();
-  if (!session?.user) throw new Error("Unauthorized");
-
   const [kb] = await pgDb
     .select()
     .from(knowledgeBase)
-    .where(
-      and(eq(knowledgeBase.id, id), eq(knowledgeBase.userId, session.user.id))
-    );
+    .where(eq(knowledgeBase.id, id));
 
   if (!kb) throw new Error("Knowledge base not found");
   return kb;
@@ -120,9 +88,6 @@ export async function updateKnowledgeBase(
   id: string,
   data: { name: string; description?: string }
 ) {
-  const session = await getSession();
-  if (!session?.user) throw new Error("Unauthorized");
-
   const [updated] = await pgDb
     .update(knowledgeBase)
     .set({
@@ -130,9 +95,7 @@ export async function updateKnowledgeBase(
       description: data.description || null,
       updatedAt: new Date(),
     })
-    .where(
-      and(eq(knowledgeBase.id, id), eq(knowledgeBase.userId, session.user.id))
-    )
+    .where(eq(knowledgeBase.id, id))
     .returning();
 
   return updated;
@@ -142,14 +105,7 @@ export async function updateKnowledgeBase(
  * DELETE KB
  * ------------------------------------------------------------ */
 export async function deleteKnowledgeBase(id: string) {
-  const session = await getSession();
-  if (!session?.user) throw new Error("Unauthorized");
-
-  await pgDb
-    .delete(knowledgeBase)
-    .where(
-      and(eq(knowledgeBase.id, id), eq(knowledgeBase.userId, session.user.id))
-    );
+  await pgDb.delete(knowledgeBase).where(eq(knowledgeBase.id, id));
 
   return { success: true };
 }
@@ -161,15 +117,10 @@ export async function updateKnowledgeBaseConfig(
   id: string,
   chunkingConfig: { minSize: number; maxSize: number; overlap: number }
 ) {
-  const session = await getSession();
-  if (!session?.user) throw new Error("Unauthorized");
-
   const [updated] = await pgDb
     .update(knowledgeBase)
     .set({ chunkingConfig })
-    .where(
-      and(eq(knowledgeBase.id, id), eq(knowledgeBase.userId, session.user.id))
-    )
+    .where(eq(knowledgeBase.id, id))
     .returning();
 
   return updated;
@@ -179,9 +130,6 @@ export async function updateKnowledgeBaseConfig(
  * DOCUMENT QUERIES
  * ------------------------------------------------------------ */
 export async function getDocuments(kbId: string) {
-  const session = await getSession();
-  if (!session?.user) throw new Error("Unauthorized");
-
   return await pgDb
     .select()
     .from(document)
@@ -189,9 +137,6 @@ export async function getDocuments(kbId: string) {
 }
 
 export async function getDocument(id: string) {
-  const session = await getSession();
-  if (!session?.user) throw new Error("Unauthorized");
-
   const [doc] = await pgDb.select().from(document).where(eq(document.id, id));
 
   if (!doc) throw new Error("Document not found");
@@ -199,10 +144,6 @@ export async function getDocument(id: string) {
 }
 
 export async function deleteDocument(id: string) {
-  const session = await getSession();
-  if (!session?.user) throw new Error("Unauthorized");
-
-  // Get KB reference
   const [doc] = await pgDb
     .select({ knowledgeBaseId: document.knowledgeBaseId })
     .from(document)
@@ -210,20 +151,16 @@ export async function deleteDocument(id: string) {
 
   if (!doc) throw new Error("Document not found");
 
-  // Delete document (cascade deletes chunks)
   await pgDb.delete(document).where(eq(document.id, id));
 
-  // Recalculate tokenCount
   const [result] = await pgDb
     .select({ totalTokens: sum(document.tokenCount) })
     .from(document)
     .where(eq(document.knowledgeBaseId, doc.knowledgeBaseId));
 
-  const totalTokens = Number(result?.totalTokens || 0);
-
   await pgDb
     .update(knowledgeBase)
-    .set({ tokenCount: totalTokens })
+    .set({ tokenCount: Number(result?.totalTokens || 0) })
     .where(eq(knowledgeBase.id, doc.knowledgeBaseId));
 
   return { success: true };
@@ -233,9 +170,6 @@ export async function deleteDocument(id: string) {
  * CHUNKS
  * ------------------------------------------------------------ */
 export async function getChunks(documentId: string) {
-  const session = await getSession();
-  if (!session?.user) throw new Error("Unauthorized");
-
   return await pgDb
     .select()
     .from(embedding)
@@ -244,9 +178,6 @@ export async function getChunks(documentId: string) {
 }
 
 export async function updateChunk(id: string, content: string) {
-  const session = await getSession();
-  if (!session?.user) throw new Error("Unauthorized");
-
   const [updated] = await pgDb
     .update(embedding)
     .set({
@@ -261,17 +192,11 @@ export async function updateChunk(id: string, content: string) {
 }
 
 export async function deleteChunk(id: string) {
-  const session = await getSession();
-  if (!session?.user) throw new Error("Unauthorized");
-
   await pgDb.delete(embedding).where(eq(embedding.id, id));
   return { success: true };
 }
 
 export async function toggleChunkEnabled(id: string, enabled: boolean) {
-  const session = await getSession();
-  if (!session?.user) throw new Error("Unauthorized");
-
   const [updated] = await pgDb
     .update(embedding)
     .set({ enabled, updatedAt: new Date() })
@@ -282,16 +207,13 @@ export async function toggleChunkEnabled(id: string, enabled: boolean) {
 }
 
 /* ------------------------------------------------------------
- * CREATE A NEW CHUNK (LOCAL EMBEDDINGS ONLY)
+ * CREATE CHUNK
  * ------------------------------------------------------------ */
 export async function createChunk(
   documentId: string,
   content: string,
   chunkIndex?: number
 ) {
-  const session = await getSession();
-  if (!session?.user) throw new Error("Unauthorized");
-
   const [doc] = await pgDb
     .select()
     .from(document)
@@ -304,16 +226,13 @@ export async function createChunk(
     .from(knowledgeBase)
     .where(eq(knowledgeBase.id, doc.knowledgeBaseId));
 
-  if (!kb) throw new Error("Knowledge base not found");
-
   const { generateEmbeddings } = await import(
     "lib/knowledge/embedding-service"
   );
 
-  // 🔥 local embeddings only (NO OpenAI)
-const embeddingVectors = await generateEmbeddings([content], {
-  dimensions: kb.embeddingDimension ?? 256,
-});
+  const embeddingVectors = await generateEmbeddings([content], {
+    dimensions: kb.embeddingDimension ?? 256,
+  });
 
   let nextIndex = chunkIndex;
   if (nextIndex === undefined) {
@@ -359,25 +278,8 @@ export async function searchKnowledge(
   query: string,
   options?: { limit?: number; threshold?: number }
 ) {
-  const session = await getSession();
-  if (!session?.user) throw new Error("Unauthorized");
-
-  const [kb] = await pgDb
-    .select()
-    .from(knowledgeBase)
-    .where(
-      and(
-        eq(knowledgeBase.id, knowledgeBaseId),
-        eq(knowledgeBase.userId, session.user.id)
-      )
-    );
-
-  if (!kb) throw new Error("Knowledge base not found or access denied");
-
-  const results = await searchKnowledgeService(knowledgeBaseId, query, {
+  return await searchKnowledgeService(knowledgeBaseId, query, {
     limit: options?.limit || 5,
     enabledOnly: true,
   });
-
-  return results;
 }
