@@ -64,7 +64,10 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
+```bash
 Password = Hello@123
+```
+
 
 The first user to sign up will automatically become an admin.
 
