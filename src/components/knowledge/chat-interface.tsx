@@ -87,8 +87,6 @@
 //     <div className="flex h-full flex-col overflow-hidden">
 //       {/* Messages - Scrollable Area */}
 //       <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
-        
-       
 
 //         {/* Chat Messages */}
 //         {messages.map((message) => {
@@ -227,7 +225,6 @@
 //   );
 // }
 
-
 "use client";
 
 import { useChat } from "@ai-sdk/react";
@@ -317,10 +314,10 @@ export function ChatInterface({
           {messages.length === 0 && !isLoading && (
             <div className="pt-8 pb-4 text-center">
               <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-slate-900">
-                What do you want to create?
+                Your guide to who I am
               </h1>
               <p className="mt-3 text-sm md:text-base text-slate-500">
-                Start building with a single prompt. No coding needed.
+                Ask questions, explore my work, and learn more about who I am.
               </p>
             </div>
           )}

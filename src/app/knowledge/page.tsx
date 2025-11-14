@@ -119,10 +119,10 @@ export default function KnowledgesPage() {
           <section className="flex flex-1 flex-col items-center justify-center px-4 pb-16">
             <div className="text-center max-w-xl">
               <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-slate-900">
-                Create a digital version of you?
+                Your guide to who I am
               </h1>
               <p className="mt-3 text-sm md:text-base text-slate-500">
-                Start building with a single prompt. No coding needed.
+                Ask questions, explore my work, and learn more about who I am.
               </p>
             </div>
 
