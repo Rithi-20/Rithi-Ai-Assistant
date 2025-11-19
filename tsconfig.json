@@ -46,6 +46,6 @@
     ".next/types/**/*.ts",
     "drizzle.config.ts",
     "tests/**/*.ts"
-  ],
+, "scripts/encrypt-profile-password.js"  ],
   "exclude": ["node_modules"]
 }

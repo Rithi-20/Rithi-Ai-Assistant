@@ -414,7 +414,7 @@ CREATE TABLE "smart_agent" (
 	"description" text,
 	"avatar_url" text,
 	"agent_type" text DEFAULT 'custom',
-	"llm_model" text DEFAULT 'openai/gpt-4o' NOT NULL,
+	"llm_model" text DEFAULT 'google/gemini-1.5-flash-latest' NOT NULL,
 	"goal" text NOT NULL,
 	"instructions" text,
 	"success_metrics" json DEFAULT '{}'::json,

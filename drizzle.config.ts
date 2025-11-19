@@ -1,20 +1,23 @@
+// import { defineConfig } from "drizzle-kit";
+// import dotenv from "dotenv";
+
+// dotenv.config({ path: ".env" }); // make drizzle load .env
+
+// export default defineConfig({
+//   dialect: "postgresql",
+//   schema: "./src/db/schema",
+//   out: "./drizzle",
+//   dbCredentials: {
+//     url: process.env.POSTGRES_URL!,
+//   },
+// });
 import { defineConfig } from "drizzle-kit";
-import "load-env";
-
-const dialect = "postgresql";
-
-const url = process.env.POSTGRES_URL!;
-
-const schema = "./src/lib/db/pg/schema.pg.ts";
-
-const out = "./src/lib/db/migrations/pg";
 
 export default defineConfig({
-  schema,
-  out,
-  dialect,
-  migrations: {},
+  dialect: "postgresql",
+  schema: "./src/lib/db/pg/schema.pg.ts",
+  out: "./drizzle",
   dbCredentials: {
-    url,
+    url: process.env.POSTGRES_URL!,
   },
 });
