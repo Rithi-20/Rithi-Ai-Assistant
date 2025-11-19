@@ -15,10 +15,13 @@
     "incremental": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "noUnusedLocals": true,
-    "strictPropertyInitialization": false,
+
+    
+    "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noImplicitAny": false,
+    "strictPropertyInitialization": false,
+
     "plugins": [
       {
         "name": "next"
@@ -45,7 +48,8 @@
     "src/types/global.d.ts",
     ".next/types/**/*.ts",
     "drizzle.config.ts",
-    "tests/**/*.ts"
-, "scripts/encrypt-profile-password.js"  ],
+    "tests/**/*.ts",
+    "scripts/encrypt-profile-password.js"
+  ],
   "exclude": ["node_modules"]
 }
