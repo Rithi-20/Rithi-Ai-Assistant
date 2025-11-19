@@ -214,58 +214,50 @@ export class DocumentStorageOperations {
 
   /* -------------------------------------------------------------- */
   private async _extractTextFromFile(file: File): Promise<string> {
-    const name = file.name.toLowerCase();
+  const name = file.name.toLowerCase();
 
-    if (/\.(txt|md|csv)$/.test(name)) return await file.text();
+  // Plain text formats
+  if (/\.(txt|md|csv)$/.test(name)) return await file.text();
 
-    if (name.endsWith(".json")) {
-      try {
-        return JSON.stringify(JSON.parse(await file.text()), null, 2);
-      } catch {
-        return await file.text();
-      }
+  // JSON
+  if (name.endsWith(".json")) {
+    try {
+      return JSON.stringify(JSON.parse(await file.text()), null, 2);
+    } catch {
+      return await file.text();
     }
-
-    if (name.endsWith(".html"))
-      return (await file.text())
-        .replace(/<[^>]*>/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-
-    if (name.endsWith(".pdf")) {
-      const pdfjsLib: any = await import("pdfjs-dist/legacy/build/pdf.mjs");
-      const data = new Uint8Array(await file.arrayBuffer());
-      const pdf = await pdfjsLib.getDocument({ data, disableWorker: true })
-        .promise;
-
-      let text = "";
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        text += content.items.map((it: any) => it.str || "").join(" ") + "\n";
-      }
-      return text.trim();
-    }
-
-    if (name.endsWith(".docx")) {
-      const { value } = await mammoth.extractRawText({
-        buffer: Buffer.from(await file.arrayBuffer()),
-      });
-      return value.trim();
-    }
-
-    if (/\.(xlsx|xls)$/.test(name)) {
-      const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
-      return workbook.SheetNames.map(
-        (sheet) =>
-          `\n\n=== Sheet: ${sheet} ===\n\n${XLSX.utils.sheet_to_csv(
-            workbook.Sheets[sheet]
-          )}`
-      ).join("\n\n");
-    }
-
-    throw new Error(`Unsupported file: ${name}`);
   }
+
+  // HTML → strip tags
+  if (name.endsWith(".html"))
+    return (await file.text())
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  // ❌ PDF block removed completely
+
+  // DOCX
+  if (name.endsWith(".docx")) {
+    const { value } = await mammoth.extractRawText({
+      buffer: Buffer.from(await file.arrayBuffer()),
+    });
+    return value.trim();
+  }
+
+  // Excel (xls / xlsx)
+  if (/\.(xlsx|xls)$/.test(name)) {
+    const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
+    return workbook.SheetNames.map(
+      (sheet) =>
+        `\n\n=== Sheet: ${sheet} ===\n\n${XLSX.utils.sheet_to_csv(
+          workbook.Sheets[sheet]
+        )}`
+    ).join("\n\n");
+  }
+
+  throw new Error(`Unsupported file: ${name}`);
+}
 
   /* -------------------------------------------------------------- */
   private _chunkTextSmart(text: string, config: ChunkingConfig): string[] {
