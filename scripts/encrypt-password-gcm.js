@@ -77,11 +77,15 @@ function encryptValue(value) {
     output: process.stdout,
   });
 
+  // 🔍 DEBUG LINE YOU REQUESTED:
+  console.log("ENV CHECK:", process.env.PROFILE_PASSWORD_ENCRYPTED);
+
   readline.question("Enter password to encrypt: ", (password) => {
     const encrypted = encryptValue(password.trim());
+
     console.log("\n🔐 Encrypted Password:");
     console.log(encrypted);
+    
     readline.close();
   });
 })();
-

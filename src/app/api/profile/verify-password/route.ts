@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decryptValue } from "@/lib/encryption";
 
+console.log("ENV CHECK:", process.env.PROFILE_PASSWORD_ENCRYPTED);
+
 export async function POST(req: NextRequest) {
   try {
     const { password } = await req.json();
 
-
-
-    if (typeof password !== "string" || !password) {
+    if (!password) {
       return NextResponse.json(
         { success: false, error: "Password is required" },
         { status: 400 }
@@ -15,6 +15,7 @@ export async function POST(req: NextRequest) {
     }
 
     const encrypted = process.env.PROFILE_PASSWORD_ENCRYPTED;
+
     if (!encrypted) {
       console.error("PROFILE_PASSWORD_ENCRYPTED env var not set");
       return NextResponse.json(
@@ -23,11 +24,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const expectedPassword = decryptValue(encrypted);
-
-    const isValid = password === expectedPassword;
+    const expected = decryptValue(encrypted);
+    const isValid = password === expected;
 
     return NextResponse.json({ success: isValid });
+
   } catch (error) {
     console.error("Error verifying profile password:", error);
     return NextResponse.json(
