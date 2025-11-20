@@ -44,19 +44,19 @@
 // console.log("\n🔐 Encrypted Value:");
 // console.log(encryptValue(password));
 // console.log("\nCopy this string into PROFILE_PASSWORD_ENCRYPTED in your .env.local file.\n");
-
 require("dotenv").config({ path: ".env.local" });
 const crypto = require("crypto");
 
 function encryptValue(value) {
-  const keyHex = process.env.ENCRYPTION_SECRET;
+  const keyBase64 = process.env.ENCRYPTION_SECRET;
 
-  if (!keyHex) {
+  if (!keyBase64) {
     console.error("\n❌ ENCRYPTION_SECRET is missing in .env.local");
     process.exit(1);
   }
 
-  const key = Buffer.from(keyHex, "hex");
+  // Base64 decoding (correct)
+  const key = Buffer.from(keyBase64, "base64");
 
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
@@ -77,15 +77,15 @@ function encryptValue(value) {
     output: process.stdout,
   });
 
-  // 🔍 DEBUG LINE YOU REQUESTED:
-  console.log("ENV CHECK:", process.env.PROFILE_PASSWORD_ENCRYPTED);
+  // Correct debug line
+  console.log("ENV CHECK:", process.env.ENCRYPTION_SECRET);
 
   readline.question("Enter password to encrypt: ", (password) => {
     const encrypted = encryptValue(password.trim());
 
     console.log("\n🔐 Encrypted Password:");
     console.log(encrypted);
-    
+
     readline.close();
   });
 })();
