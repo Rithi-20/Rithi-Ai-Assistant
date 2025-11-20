@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decryptValue } from "@/lib/encryption";
 
-console.log("ENV CHECK:", process.env.PROFILE_PASSWORD_ENCRYPTED);
+console.log("ENV CHECK =>", JSON.stringify(process.env, null, 2))
 
 export async function POST(req: NextRequest) {
   try {
