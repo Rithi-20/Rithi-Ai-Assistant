@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decryptValue } from "@/lib/encryption";
 
-console.log("ENV CHECK =>", JSON.stringify(process.env, null, 2))
+// SAFE DEBUG: Print only keys, not secrets
+console.log("DEBUG ENV KEYS =>", Object.keys(process.env));
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,7 +15,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Read ENV value
     const encrypted = process.env.PROFILE_PASSWORD_ENCRYPTED;
+
+    // Debug this single variable
+    console.log("DEBUG PROFILE_PASSWORD_ENCRYPTED =>", encrypted ? "FOUND" : "NOT FOUND");
 
     if (!encrypted) {
       console.error("PROFILE_PASSWORD_ENCRYPTED env var not set");
@@ -24,8 +29,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const expected = decryptValue(encrypted);
-    const isValid = password === expected;
+    // Decrypt password
+    const expectedPassword = decryptValue(encrypted);
+
+    const isValid = password === expectedPassword;
 
     return NextResponse.json({ success: isValid });
 
