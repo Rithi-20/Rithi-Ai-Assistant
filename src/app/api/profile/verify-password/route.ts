@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { decryptValue } from "@/lib/encryption";
 
 // SAFE DEBUG: Print only keys, not secrets
-console.log("DEBUG ENV KEYS =>", Object.keys(process.env));
+
 
 export async function POST(req: NextRequest) {
   try {
